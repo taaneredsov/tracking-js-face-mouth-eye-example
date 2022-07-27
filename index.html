@@ -1,0 +1,65 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>Tracking Test</title>
+  <script src="js/tracking-min.js"></script>
+  <script src="js/data/face-min.js"></script>
+  <script src="js/data/eye-min.js"></script>
+  <script src="js/data/mouth-min.js"></script>
+
+	<link rel="stylesheet" src="css/reset.css">
+	<link rel="stylesheet" src="css/style.css">
+</head>
+<body>
+	<div class="images">
+		<video id="myVideo" width="400" height="300" preload autoplay loop muted></video>
+		<canvas id="myCanvas" width="400" height="300"></canvas>
+	</div>
+  <script>
+    window.onload = () => {
+			const video = document.getElementById('myVideo');
+			const canvas = document.getElementById('myCanvas');
+			const ctx = canvas.getContext('2d');
+
+			const constraints = { video: { frameRate: { ideal: 15, max: 25 } }, audio: false };
+
+			navigator.mediaDevices.getUserMedia(constraints)
+				.then((stream) => {
+					video.srcObject = stream;
+					// video.play();
+				})
+				.catch((error) => {
+					console.log("An error occurred: " + error);
+			});
+
+			const showImage = (e) => {
+				ctx.clearRect(0,0, canvas.width, canvas.height);
+
+				e.data.forEach( (element) => {
+						// console.log(element);
+						ctx.beginPath();
+						ctx.rect(element.x, element.y, element.height, element.width);
+						ctx.stroke();
+					}
+				);
+			}
+
+			video.addEventListener('play', () => {
+				step = () => {
+					ctx.globalAlpha = 0.5;
+					ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+					requestAnimationFrame(step);
+				}
+				requestAnimationFrame(step);
+			})
+
+      const tracker = new tracking.ObjectTracker(['face', 'eye', 'mouth']);
+			tracking.track(video, tracker, { camera: true });
+
+			tracker.on('track', showImage);
+    };
+  </script>
+
+</body>
+</html>
